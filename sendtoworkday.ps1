@@ -1,5 +1,7 @@
 $settings = $PSScriptRoot + "\settings.txt"
 
+Set-Location $PSScriptRoot;
+
 Get-Content $settings | foreach-object -begin {$h=@{}} -process { $k = [regex]::split($_,'='); if(($k[0].CompareTo("") -ne 0) -and ($k[0].StartsWith("[") -ne $True)) { $h.Add($k[0], $k[1]) } }
 
 $server = $h["Server"]
@@ -28,13 +30,16 @@ try
 
         $transferOptions = New-Object WinSCP.TransferOptions
         $transferOptions.TransferMode = [WinSCP.TransferMode]::Binary
-	$transferOptions.PreserveTimestamp = $False
-
-        $transferResult = $session.PutFiles("D:\inbound\workdaysubmission.zip", "/wd-inbound-sftp/dev/workdaysubmission.zip", $False, $transferOptions)
+	    $transferOptions.PreserveTimestamp = $False
         
-        foreach ($transfer in $transferResult.Transfers){Write-Host "Upload of $($transfer.FileName) succeeded"}
+        $transferResult = $session.PutFiles($pwd.Path + "\workdaysubmission.zip", "/wd-inbound-sftp/dev/workdaysubmission.zip", $True, $transferOptions)
  
-        $transferResult.Check()
+        $transferResult.Check()       
+
+        foreach ($transfer in $transferResult.Transfers){Write-Host "Upload of $($transfer.FileName) succeeded"}
+        
+    }catch{
+        "Transfer failed"
     }
     
     finally{$session.Dispose()}
